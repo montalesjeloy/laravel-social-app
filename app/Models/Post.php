@@ -22,4 +22,10 @@ class Post extends Model
     {
         return $this->hasMany(PostImage::class);
     }
+
+    // 1 post can be hidden by multiple users
+    public function hiddenByUsers()
+    {
+        return $this->hasMany(HiddenPost::class);
+    }
 }

@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\PostController;
 use App\Models\Post;
+use App\Http\Controllers\HiddenPostController;
 // use GuzzleHttp\Psr7\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -21,6 +22,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
             'user',
             'images'
         ])
+        ->whereDoesntHave('hiddenByUsers', function ($query) {
+            $query->where('user_id', auth()->id());
+        })
         ->latest()
         ->get();
 
@@ -30,15 +34,16 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     })->name('dashboard');
 
+        // Hide a specific post for the authenticated user
+        Route::post('/posts/{post}/hide', [HiddenPostController::class, 'hide'])
+            ->name('posts.hide');
+
+        // Unhide a specific post for the authenticated user
+        Route::delete('/posts/{post}/hide', [HiddenPostController::class, 'unhide'])
+            ->name('posts.unhide');
+
 });
 
-// Route::get('dashboard', function () {
 
-//     // get posts
-//     $posts = Post::all();
-
-//     return view('dashboard', compact('posts'));
-
-// })->name('dashboard');
 
 require __DIR__.'/settings.php';
