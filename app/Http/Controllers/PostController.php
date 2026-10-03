@@ -38,7 +38,7 @@ class PostController extends Controller
     {
     // From create post form
     $validated = $request->validate([
-        'body' => 'required_without:images|string',
+        'body' => 'nullable|string|required_without:images',
 
         // Multiple image upload validation
         'images' => 'nullable|array',
@@ -100,33 +100,73 @@ class PostController extends Controller
      */
     public function update(Request $request, Post $post)
     {
-        $validated = $request->validate([
-            'body' => 'required',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg|max:4096',
+        // Only the owner can edit the post
+        abort_if(auth()->id() !== $post->user_id, 403);
 
+        // Validate the edited post
+        $validated = $request->validate([
+            'body' => 'nullable|string',
+
+            // New images
+            'images' => 'nullable|array',
+            'images.*' => [
+                'image',
+                'mimes:jpeg,png,jpg,webp',
+                'max:4096',
+            ],
+
+            // Existing images selected for removal
+            'removed_images' => 'nullable|array',
+            'removed_images.*' => 'integer',
         ]);
 
-        if ($request->hasFile('image')) {
-        
-            //delete old image
-            if ($post->image) {
-                Storage::disk('public')->delete($post->image);
-            }
+        // IDs of existing images the user wants to remove
+        $removedImageIds = $validated['removed_images'] ?? [];
 
-            //save new image
-            $validated['image'] = $request->file('image')
-            ->store('posts', 'public');
+        // Only select images that actually belong to this post
+        $imagesToRemove = $post->images()
+            ->whereIn('id', $removedImageIds)
+            ->get();
 
-        } else {
-            //keep the old image
-            $validated['image'] = $post->image;
+        // Check how many images will remain after editing
+        $remainingImages =
+            $post->images()->count()
+            - $imagesToRemove->count()
+            + count($request->file('images', []));
+
+        // Post must have text OR at least one image
+        if (blank($validated['body'] ?? null) && $remainingImages === 0) {
+            return response()->json([
+                'message' => 'A post must contain text or at least one image.',
+            ], 422);
         }
 
-        // $post = Post::findOrFail($id);
-        $post->update($validated);
+        // Update the post text
+        $post->update([
+            'body' => $validated['body'] ?? null,
+        ]);
 
-        return redirect()->route('dashboard')
-        ->with('success', 'Post updated successfully!');
+        // Delete selected existing images
+        foreach ($imagesToRemove as $image) {
+            Storage::disk('public')->delete($image->image);
+
+            $image->delete();
+        }
+
+        // Save newly added images
+        if ($request->hasFile('images')) {
+            foreach ($request->file('images') as $image) {
+                $path = $image->store('posts', 'public');
+
+                $post->images()->create([
+                    'image' => $path,
+                ]);
+            }
+        }
+
+        return response()->json([
+            'message' => 'Post updated successfully.',
+        ]);
     }
 
     /**

@@ -3,6 +3,7 @@
     x-data="{
         hidden: false,
         loading: false,
+        editOpen: false,
 
         async hidePost() {
             this.loading = true;
@@ -96,12 +97,13 @@
                     @if(auth()->id() === $post->user_id)
 
                         {{-- Edit --}}
-                        <a
-                            href="{{ route('posts.edit', $post) }}"
-                            class="block px-4 py-3 text-sm hover:bg-neutral-100 dark:hover:bg-neutral-800"
+                        <button
+                            type="button"
+                            @click="open = false; editOpen = true"
+                            class="block w-full px-4 py-3 text-left text-sm hover:bg-neutral-100 dark:hover:bg-neutral-800"
                         >
                             ✏️ Edit
-                        </a>
+                        </button>
 
                         {{-- Delete --}}
                         <form
@@ -305,6 +307,9 @@
             Undo
         </button>
     </div>
+
+    {{-- Edit Post Modal --}}
+    @include('posts.edit-post-modal')
 
 </div>
 {{-- End Post Card --}}
