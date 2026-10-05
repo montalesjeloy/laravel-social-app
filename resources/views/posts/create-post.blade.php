@@ -6,7 +6,17 @@
             focused: false,
             body: '',
             images: [],
-            previews: []
+            previews: [],
+
+            syncFiles() {
+                const dataTransfer = new DataTransfer();
+
+                this.images.forEach((file) => {
+                    dataTransfer.items.add(file);
+                });
+
+                this.$refs.fileInput.files = dataTransfer.files;
+            }
         }"
         @click.outside="
             if(body.trim() === '' && previews.length === 0) {
@@ -96,6 +106,7 @@
                                 </svg>
 
                                 <input
+                                    x-ref="fileInput"
                                     type="file"
                                     name="images[]"
                                     accept="image/*"
@@ -111,6 +122,8 @@
                                                 image => URL.createObjectURL(image)
                                             )
                                         ];
+
+                                        syncFiles();
                                         
                                         focused = true;
                                     "

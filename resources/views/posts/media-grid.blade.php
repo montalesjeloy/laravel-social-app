@@ -10,10 +10,11 @@
                 type="button"
 
                 @click="
-                    previews.splice(0,1);
-                    images.splice(0,1);
+                    previews.splice(index,1);
+                    images.splice(index,1);
+                    syncFiles();
                 "
-
+                
                 class="absolute left-3 top-3 flex h-8 w-8 items-center justify-center rounded-full bg-black/60 text-white hover:bg-red-500"
             >
                 ✕
@@ -36,6 +37,7 @@
                     @click="
                         previews.splice(index,1);
                         images.splice(index,1);
+                        syncFiles();
                     "
                     class="absolute left-3 top-3 flex h-8 w-8 items-center justify-center rounded-full bg-black/60 text-white hover:bg-red-500"
                 >
