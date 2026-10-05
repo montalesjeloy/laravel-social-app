@@ -3,7 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class HiddenPost extends Model
 {
     protected $fillable = [
@@ -14,7 +14,10 @@ class HiddenPost extends Model
     /**
      * Get the user who hid the post.
      */
-    public function user()
+    /**
+     * @return BelongsTo<User, $this>
+     */
+    public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
     }
@@ -22,7 +25,10 @@ class HiddenPost extends Model
     /**
      * Get the post that was hidden.
      */
-    public function post()
+    /**
+     * @return BelongsTo<Post, $this>
+     */
+    public function post(): BelongsTo
     {
         return $this->belongsTo(Post::class);
     }

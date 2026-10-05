@@ -3,13 +3,14 @@
 namespace App\Http\Controllers;
 
 use App\Models\Post;
+use Illuminate\Http\JsonResponse;
 
 class HiddenPostController extends Controller
 {
     /**
      * Hide a post for the authenticated user.
      */
-    public function hide(Post $post)
+    public function hide(Post $post): JsonResponse
     {
         
         // Prevent the authenticated user from hiding their own post
@@ -27,7 +28,7 @@ class HiddenPostController extends Controller
     /**
      * Unhide a post for the authenticated user.
      */
-    public function unhide(Post $post)
+    public function unhide(Post $post): JsonResponse
     {
         // Find and remove the hidden post record
         auth()->user()
@@ -35,7 +36,7 @@ class HiddenPostController extends Controller
             ->where('post_id', $post->id)
             ->delete();
 
-        // Return to the previous page
+        // Send a JSON response back to the frontend
         return response()->json(['message' => 'Post restored successfully.']);
     }
 }

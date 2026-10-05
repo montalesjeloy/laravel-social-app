@@ -3,19 +3,19 @@
 namespace App\Http\Controllers;
 
 use App\Models\Post;
+use Illuminate\View\View;
 
 class DashboardController extends Controller
 {
-     public function index()
+    public function index(): View
     {
-    // Get all posts with user and images relationship
+        // Get all posts with user and images relationship
         $posts = Post::with([
             'user',
-            'images'
+            'images',
         ])
-        ->latest()
-        ->get();
-
+            ->latest()
+            ->get();
 
         // Pass posts data to dashboard view
         return view('dashboard', compact('posts'));

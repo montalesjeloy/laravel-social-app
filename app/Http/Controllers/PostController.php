@@ -3,22 +3,27 @@
 namespace App\Http\Controllers;
 
 use App\Models\Post;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\View\View;
 
 class PostController extends Controller
 {
     /**
      * Display a listing of the resource.
      */
-    public function index(Request $request)
+    public function index(Request $request): View
     {
-        $posts = Post::with('user')->get();
-    
         $search = $request->search;
-    
-        $posts = Post::where('body', 'like', "%{$search}%")
-        ->get();
+
+        $posts = Post::with([
+            'user',
+            'images',
+        ])
+            ->where('body', 'like', "%{$search}%")
+            ->get();
 
         return view('dashboard', compact('posts'));
     }
@@ -26,7 +31,7 @@ class PostController extends Controller
     /**
      * Show the form for creating a new resource.
      */
-    public function create()
+    public function create(): View
     {
         return view('posts.create-post');
     }
@@ -34,54 +39,49 @@ class PostController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request)
+    public function store(Request $request): RedirectResponse
     {
-    // From create post form
-    $validated = $request->validate([
-        'body' => 'nullable|string|required_without:images',
+        // From create post form
+        $validated = $request->validate([
+            'body' => 'nullable|string|required_without:images',
 
-        // Multiple image upload validation
-        'images' => 'nullable|array',
-        'images.*' => [
-            'image',
-            'mimes:jpeg,png,jpg,webp',
-            'max:4096'
-        ],
-    ]);
+            // Multiple image upload validation
+            'images' => 'nullable|array',
+            'images.*' => [
+                'image',
+                'mimes:jpeg,png,jpg,webp',
+                'max:4096',
+            ],
+        ]);
 
+        // Create post record
+        $post = Post::create([
+            'body' => $validated['body'] ?? null,
+            'user_id' => auth()->id(),
+        ]);
 
-    // Create post record
-    $post = Post::create([
-        'body' => $validated['body'] ?? null,
-        'user_id' => auth()->id(),
-    ]);
+        // Upload and save multiple images
+        if ($request->hasFile('images')) {
+            foreach ($request->file('images') as $image) {
+                $path = $image->store('posts', 'public');
 
-
-    // Upload and save multiple images
-    if ($request->hasFile('images')) {
-
-        foreach ($request->file('images') as $image) {
-
-            $path = $image->store('posts', 'public');
-
-            // Save image path to post_images table
-            $post->images()->create([
-                'image' => $path,
-            ]);
+                // Save image path to post_images table
+                $post->images()->create([
+                    'image' => $path,
+                ]);
+            }
         }
-    }
 
-
-    // Redirect back after creating post
-    return redirect()
-        ->route('dashboard')
-        ->with('success', 'Post created successfully');
+        // Redirect back after creating post
+        return redirect()
+            ->route('dashboard')
+            ->with('success', 'Post created successfully');
     }
 
     /**
      * Display the specified resource.
      */
-    public function show(Post $post)
+    public function show(Post $post): void
     {
         //
     }
@@ -89,16 +89,15 @@ class PostController extends Controller
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit($id)
+    public function edit(Post $post): View
     {
-        $post = Post::findOrFail($id);
         return view('posts.edit', compact('post'));
     }
 
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, Post $post)
+    public function update(Request $request, Post $post): JsonResponse
     {
         // Only the owner can edit the post
         abort_if(auth()->id() !== $post->user_id, 403);
@@ -172,20 +171,18 @@ class PostController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Post $post)
+    public function destroy(Post $post): RedirectResponse
     {
-        
         // Allow only the owner of the post to delete it
         abort_if(auth()->id() !== $post->user_id, 403);
 
-     // Delete all uploaded image files from storage
-    foreach ($post->images as $image) {
+        // Delete all uploaded image files from storage
+        foreach ($post->images as $image) {
+            Storage::disk('public')->delete($image->image);
+        }
 
-        Storage::disk('public')->delete($image->image);
-
-    }
         // Delete the post
-        // (cascadeOnDelete() will automatically delete all related post_images)
+        // cascadeOnDelete() will automatically delete all related post_images
         $post->delete();
 
         return redirect()
