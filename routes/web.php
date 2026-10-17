@@ -5,6 +5,7 @@ use App\Models\Post;
 use App\Http\Controllers\HiddenPostController;
 // use GuzzleHttp\Psr7\Request;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\LikeController;
 
 // get route example
 Route::get('/', function () {
@@ -42,6 +43,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::delete('/posts/{post}/hide', [HiddenPostController::class, 'unhide'])
             ->name('posts.unhide');
 
+        // Like a post
+        Route::post('/posts/{post}/like', [LikeController::class, 'like'])
+            ->name('posts.like');
+
+        // Unlike a post
+        Route::delete('/posts/{post}/like', [LikeController::class, 'unlike'])
+            ->name('posts.unlike');
 });
 
 

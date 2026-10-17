@@ -13,6 +13,7 @@ class DashboardController extends Controller
         $posts = Post::with([
             'user',
             'images',
+            'likes',
         ])
             ->latest()
             ->get();

@@ -39,4 +39,12 @@ class Post extends Model
     {
         return $this->hasMany(HiddenPost::class);
     }
+
+    /**
+     * @return HasMany<Like, $this>
+     */
+    public function likes(): HasMany
+    {
+        return $this->hasMany(Like::class);
+    }
 }

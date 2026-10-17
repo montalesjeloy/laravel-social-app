@@ -40,6 +40,38 @@
 
             this.loading = false;
         }
+
+        liked: @js($post->likes->contains('user_id', auth()->id())),
+        likeCount: {{ $post->likes->count() }},
+        likeLoading: false,
+
+        async toggleLike() {
+            if (this.likeLoading) return;
+
+            this.likeLoading = true;
+
+            const response = await fetch(
+                this.liked
+                    ? '{{ route('posts.unlike', $post) }}'
+                    : '{{ route('posts.like', $post) }}',
+                {
+                    method: this.liked ? 'DELETE' : 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                        'Accept': 'application/json'
+                    }
+                }
+            );
+
+            if (response.ok) {
+                const data = await response.json();
+
+                this.liked = data.liked;
+                this.likeCount = data.count;
+            }
+
+            this.likeLoading = false;
+        },
     }"
     class="rounded-xl border border-neutral-200 bg-white p-5 shadow-sm dark:border-neutral-700 dark:bg-neutral-900"
 >
@@ -253,10 +285,24 @@
 
             {{-- Like --}}
             <button
-                class="flex items-center gap-2 rounded-lg px-4 py-2 text-neutral-500 transition hover:bg-neutral-100 hover:text-red-500 dark:hover:bg-neutral-800"
+                type="button"
+                @click="toggleLike()"
+                :disabled="likeLoading"
+                :class="liked
+                    ? 'text-red-500'
+                    : 'text-neutral-500 hover:text-red-500'
+                "
+                class="flex items-center gap-2 rounded-lg px-4 py-2 transition hover:bg-neutral-100 dark:hover:bg-neutral-800"
             >
-                ❤️
-                <span>Like</span>
+                <span>❤️</span>
+
+                <span x-text="liked ? 'Liked' : 'Like'"></span>
+
+                <span
+                    x-show="likeCount > 0"
+                    x-text="likeCount"
+                    class="text-sm"
+                ></span>
             </button>
 
             {{-- Comment --}}
