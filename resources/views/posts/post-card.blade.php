@@ -39,7 +39,7 @@
             }
 
             this.loading = false;
-        }
+        },
 
         liked: @js($post->likes->contains('user_id', auth()->id())),
         likeCount: {{ $post->likes->count() }},
