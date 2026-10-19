@@ -121,6 +121,7 @@
                 {{-- Dropdown --}}
                 <div
                     x-show="open"
+                    x-cloak
                     @click.outside="open = false"
                     x-transition
                     class="absolute right-0 z-50 mt-2 w-40 overflow-hidden rounded-xl border border-neutral-200 bg-white shadow-lg dark:border-neutral-700 dark:bg-neutral-900"
