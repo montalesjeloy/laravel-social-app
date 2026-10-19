@@ -310,7 +310,7 @@
                 class="flex items-center gap-2 rounded-lg px-4 py-2 text-neutral-500 transition hover:bg-neutral-100 hover:text-blue-500 dark:hover:bg-neutral-800"
             >
                 💬
-                <span>Comment</span>
+                <span>Comments</span>
             </button>
 
             {{-- Repost --}}
